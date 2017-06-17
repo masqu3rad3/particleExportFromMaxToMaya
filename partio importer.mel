@@ -1,0 +1,169 @@
+
+
+
+
+
+///////////////////////////////////////////////////////////////
+///////GUI////////////////////////////////////////////////////
+
+
+string $window = `window -t "pda -> pdc converter"`;
+string $form = `formLayout -w 410 -h 200 -nd 200`;
+string $ButtonOpen = `button -w 90 -h 30  -l "open" -c "browseFiles()"`;
+string $ButtonExec = `button -en 0 -l "execute" -c "importPartio()" ex_button`;
+
+
+string $DisplayPath  = `textField -w 500 -tx "" DisplayPathTextField`;
+string $StartFrame   = `textField -w 40 -tx "1" StartFrameTextField`;
+string $EndFrame     = `textField -w 40 -tx "100" EndFrameTextField`;
+
+string $startLabel   = `text -label "Start"`;
+string $EndLabel     = `text -label "End"`;
+
+string $ParticlesNameLabel      = `text -label "Particles Name"`;
+string $CacheDirectoryLabel     = `text -label "Cache Directory"`;
+
+string $ParticlesName       = `textField -w 100 -tx "My_Particles" ParticlesNameTextField`;
+string $CacheDirectory     = `textField -w 100 -tx "PDC_Cache" CacheDirectoryTextField`;
+
+
+
+
+formLayout -edit
+    -attachForm     $ButtonOpen     "top"    10
+    -attachForm     $ButtonOpen     "left"   10
+    
+    -attachForm     $DisplayPath    "top"    14
+    -attachForm     $DisplayPath    "left"   170
+    
+    
+    -attachForm     $StartFrame     "top"    14
+    -attachForm     $StartFrame     "left"   120
+    
+    -attachForm     $startLabel     "top"    35
+    -attachForm     $startLabel     "left"   125  
+    
+    -attachForm     $EndFrame       "top"    14
+    -attachForm     $EndFrame       "left"   682
+    
+    -attachForm     $EndLabel       "top"    35
+    -attachForm     $EndLabel       "left"   691 
+      
+    
+    -attachForm     $ParticlesNameLabel      "top"    72
+    -attachForm     $ParticlesNameLabel      "left"  120    
+    
+    -attachForm     $ParticlesName           "top"    70
+    -attachForm     $ParticlesName           "left"   200    
+          
+     
+     
+    -attachForm     $CacheDirectoryLabel      "top"    102
+    -attachForm     $CacheDirectoryLabel      "left"   120   
+        
+    -attachForm     $CacheDirectory           "top"    100
+    -attachForm     $CacheDirectory          "left"   200   
+   
+              
+    
+    -attachForm     $ButtonExec     "left"   50
+    -attachForm     $ButtonExec     "bottom" 5
+    -attachForm     $ButtonExec     "right"  50
+
+
+    
+$form;
+
+
+
+showWindow $window;
+
+////////////////////////////////////////////////////////////////
+///////Open Browser////////////////////////////////////////////
+
+
+global proc browseFiles()
+{
+    string $filename = `fileDialog -m 0`;
+      
+    
+    textField -edit -tx $filename DisplayPathTextField;
+          
+    button -edit -en 1 ex_button; 
+    
+    
+}		
+		                            
+//////////////////////////////////////////////////////////////// 
+///////////import procedure//////////////////////////////////// 
+
+global proc importPartio()
+{    
+         
+           
+           string $filename = `textField -q -tx DisplayPathTextField`;
+
+           print ("DisplayPath:"+$filename+"\n");
+            
+           string $path = $filename;
+           string $dirname = dirname( $path );
+           string $basename = basenameEx( $path );
+            
+             
+                      
+
+
+
+    
+    ///////////partio import///////////////////////////////////////
+         
+    int $My_Time=0;
+    int $padding = 3;
+    
+    string $p_Name             = `textField -q -tx ParticlesNameTextField`;
+    string $destination_Folder = `textField -q -tx CacheDirectoryTextField`;    
+        
+    string $p_ShapeName = ($p_Name)+"Shape";
+    string $filePath = $dirname;
+    string $fileName = `substring $basename 1 (size($basename)-3)`;  //  son 3 characteri trim ediyo
+    
+    string $fileName_Pad;   
+
+    int $StartFrame            =  `textField -q -tx StartFrameTextField`; 
+    int $EndFrame              =  `textField -q -tx EndFrameTextField`;
+
+
+
+    particle -n $p_Name -c 1 ;
+
+
+    for( $x=$StartFrame; $x<=$EndFrame; ++$x )
+       {    
+        $fileName_Pad= $fileName + (`python ("'%0"+$padding+"d' % "+$x)`);     
+        $My_Time +=1;   
+        currentTime  $My_Time;       
+        partioImport -p $p_ShapeName  -atr "rotation" "rotation" ($filePath+"/"+$fileName_Pad+".pda");
+        dynExport -f pdc -mnf $x -mxf $x -os 2 -atr position -atr velocity -atr rotation -p   $destination_Folder $p_Name;
+    
+    
+        print ($filePath+"/"+$fileName_Pad+".pda \n"); 
+        }
+
+
+
+    setAttr "dynGlobals1.useParticleDiskCache" 1;
+    setAttr -type "string" dynGlobals1.cacheDirectory $destination_Folder;
+    
+
+             
+             
+    ////////////////////////////////////////////////////////////////              
+             
+                            
+}    
+
+
+
+//////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////// 
+                        
